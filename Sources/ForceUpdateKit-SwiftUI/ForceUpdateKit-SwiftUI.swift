@@ -2,16 +2,13 @@ import Foundation
 import SwiftUI
 import Combine
 import ControlKitBase
-#if canImport(UIKit)
-import UIKit
-#endif
 
 public let forceUpdateKit_Version: String = "1.0.0"
 @MainActor
 public class ForceUpdateKit: AnyObject, @MainActor Updatable {
     // MARK: - Properties
     public let updateService: GenericServiceProtocol!
-    private var currentConfig: UpdateServiceConfig?
+    private var config: UpdateServiceConfig?
     private var currentMaxRetries: Int = 5
     private var currentRetryCount: Int = 0
     nonisolated(unsafe) private static var sharedInstance: ForceUpdateKit?
@@ -24,96 +21,98 @@ public class ForceUpdateKit: AnyObject, @MainActor Updatable {
     }
     
     // MARK: - Public Configuration
-    @MainActor
-    public func configure(config: UpdateServiceConfig, maxRetries: Int = 5) async {
-        self.currentConfig = config
+    public func configure(config: UpdateServiceConfig, maxRetries: Int = 5) async -> AnyView {
+        self.config = config
         self.currentMaxRetries = maxRetries
         self.currentRetryCount = 0
         
-        await configureWithRetry()
+        return await configureWithRetry()
     }
     
     // MARK: - Private Force Update Logic
-    @MainActor
-    private func configureWithRetry() async {
-        guard let config = currentConfig else { 
-            return 
+    private func configureWithRetry() async -> AnyView {
+        guard let currentConfig = config else {
+            return AnyView(Text(""))
         }
         
-        let request = UpdateRequest(appId: config.appId)
+        let request = UpdateRequest(appId: currentConfig.appId)
         
         do {
             let response = try await self.update(request: request)
             if response.isSuccess {
-                await successResponse(config: config, response: response)
+                return await successResponse(config: currentConfig, response: response)
             } else {
-                showRetryView()
+                return await showRetryView()
             }
         } catch {
-            showRetryView()
+            return await showRetryView()
         }
     }
     
-    @MainActor
-    private func showRetryView() {
-        guard let config = currentConfig else { return }
+    private func showRetryView() async -> AnyView {
+        guard let currentConfig = config else {
+            return AnyView(Text(""))
+        }
         
         presenter.dismissRetry()
         
-        presenter.presentRetry(config: config.viewConfig, retryAction: {
-            guard let sharedInstance = ForceUpdateKit.sharedInstance else {
-                return
-            }
-            
-            Task { @MainActor in
-                sharedInstance.presenter.dismissRetry()
-                sharedInstance.currentRetryCount += 1
-                if sharedInstance.currentRetryCount <= sharedInstance.currentMaxRetries {
-                    await sharedInstance.configureWithRetry()
-                } else {
-                    sharedInstance.showMaxRetriesReached()
+        return AnyView(
+            RetryConnectionView(
+                config: currentConfig.viewConfig,
+                retryAction: {
+                    guard let sharedInstance = ForceUpdateKit.sharedInstance else {
+                        return
+                    }
+                    
+                    Task { @MainActor in
+                        sharedInstance.presenter.dismissRetry()
+                        sharedInstance.currentRetryCount += 1
+                        if sharedInstance.currentRetryCount <= sharedInstance.currentMaxRetries {
+                            _ = await sharedInstance.configureWithRetry()
+                        } else {
+                            _ = await sharedInstance.showMaxRetriesReached()
+                        }
+                    }
                 }
-            }
-        })
-    }
-    
-    @MainActor
-    private func showMaxRetriesReached() {
-        guard let config = currentConfig else { return }
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootViewController = windowScene.windows.first?.rootViewController {
-            let alert = UIAlertController(
-                title: config.viewConfig.maxRetriesAlertTitle,
-                message: config.viewConfig.maxRetriesAlertMessage,
-                preferredStyle: .alert
             )
-            
-            alert.addAction(UIAlertAction(title: config.viewConfig.maxRetriesAlertButtonTitle, style: .default))
-            rootViewController.present(alert, animated: true)
-        }
+        )
     }
     
-    @MainActor
-    private func successResponse(config: UpdateServiceConfig, response: Result<UpdateResponse>) async {
+    private func showMaxRetriesReached() async -> AnyView {
+        guard let currentConfig = config else {
+            return AnyView(Text(""))
+        }
+        
+        return AnyView(
+            MaxRetriesReachedView(
+                title: currentConfig.viewConfig.maxRetriesAlertTitle,
+                message: currentConfig.viewConfig.maxRetriesAlertMessage,
+                buttonTitle: currentConfig.viewConfig.maxRetriesAlertButtonTitle
+            )
+        )
+    }
+    
+    private func successResponse(config: UpdateServiceConfig, response: Result<UpdateResponse>) async -> AnyView {
         presenter.dismissRetry()
-        guard let res = response.value else { return }
+        guard let res = response.value else { 
+            return AnyView(Text(""))
+        }
+        
         let viewModel = DefaultForceUpdateViewModel(
             serviceConfig: config,
             response: res
         )
-        do {
-            if response.value?.data != nil {
-                // Wait for presenter to update config if needed
-                try await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-                
-                let forceUpdateView = ForceUpdateViewStyle.make(
-                    viewModel: viewModel,
-                    config: config.viewConfig
-                )
-                
-                presenter.presentForceUpdate(forceUpdateView)
-            }
-        } catch {}
+        
+        if response.value?.data != nil {
+            let forceUpdateView = ForceUpdateViewStyle.make(
+                viewModel: viewModel,
+                config: config.viewConfig
+            )
+            
+            return AnyView(forceUpdateView)
+        } else {
+            return AnyView(Text(""))
+        }
     }
 }
 

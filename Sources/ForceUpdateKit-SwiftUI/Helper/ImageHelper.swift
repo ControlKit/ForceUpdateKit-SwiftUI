@@ -6,6 +6,9 @@
 //
 import Foundation
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 public class ImageHelper {
     public static var resolvedBundle: Bundle {
 #if SWIFT_PACKAGE
