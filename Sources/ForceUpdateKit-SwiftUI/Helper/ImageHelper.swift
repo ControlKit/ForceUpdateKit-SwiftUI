@@ -26,5 +26,12 @@ public class ImageHelper {
     public static func uiImage(_ name: String) -> UIImage? {
         return UIImage(named: name, in: resolvedBundle, compatibleWith: nil)
     }
+    
+    public static func swiftUIImage(_ name: String) -> Image? {
+        if let uiImage = uiImage(name) {
+            return Image(uiImage: uiImage)
+        }
+        return nil
+    }
 }
 

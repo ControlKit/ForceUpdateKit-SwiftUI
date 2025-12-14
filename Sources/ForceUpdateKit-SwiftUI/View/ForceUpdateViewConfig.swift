@@ -22,7 +22,7 @@ open class ForceUpdateViewConfig {
     public var popupViewCornerRadius: CGFloat = 15.0
     public var contentBackGroundImage: Image?
     public var updateImageType: ImageType = .spaceship1
-    public var updateImage: Image?
+    public var icon: String?
     public var updateImageColor: Color?
     public var updateButtonFont = Font.system(size: 12, weight: .medium)
     public var headerTitleFont = Font.system(size: 13, weight: .bold)

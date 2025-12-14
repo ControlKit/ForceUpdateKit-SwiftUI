@@ -19,7 +19,7 @@ public extension Actionable where Self: ForceUpdateViewModel {
                 itemId: self.response.data?.id ?? "",
             )
             request.extraParameter = "\(request.itemId ?? "")"
-            let result: Result<ActionResponse> = try await actionService.execute(request: request)
+            let _: Result<ActionResponse> = try await actionService.execute(request: request)
             
         }
     }

@@ -9,33 +9,14 @@ import Foundation
 import SwiftUI
 import ControlKitBase
 
-public struct ForceUpdateView_FullScreen1: ForceUpdateViewProtocol {
+public struct ForceUpdateView_FullScreen1: View, ForceUpdateViewProtocol {
     @State private var config: ForceUpdateViewConfig
     var viewModel: ForceUpdateViewModel
     
     public init(viewModel: ForceUpdateViewModel, config: ForceUpdateViewConfig) {
         self.viewModel = viewModel
-        var updatedConfig = ForceUpdateViewPresenter(data: viewModel.response.data, config: config).config
+        let updatedConfig = ForceUpdateViewPresenter(data: viewModel.response.data, config: config).config
         self._config = State(initialValue: updatedConfig)
-    }
-    
-    @ViewBuilder
-    private var updateImage: some View {
-        if let color = config.updateImageColor {
-            if let img = config.updateImage {
-                img
-                    .imageWithColor(color)
-            } else if let img = ImageHelper.image(config.updateImageType.rawValue) {
-                img
-                    .imageWithColor(color)
-            }
-        } else {
-            if let img = config.updateImage {
-                img
-            } else if let img = ImageHelper.image(config.updateImageType.rawValue) {
-                img
-            }
-        }
     }
     
     public var body: some View {
@@ -49,7 +30,11 @@ public struct ForceUpdateView_FullScreen1: ForceUpdateViewProtocol {
             VStack(spacing: 0) {
                 Spacer()
                 
-                updateImage
+                iconView(
+                    color: config.updateImageColor,
+                    image: config.icon,
+                    imageType: config.updateImageType
+                )
                     .frame(width: 191, height: 139)
                     .padding(.bottom, 56)
                 

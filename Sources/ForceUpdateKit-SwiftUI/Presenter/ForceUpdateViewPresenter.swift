@@ -7,9 +7,7 @@
 import Foundation
 import SwiftUI
 import ControlKitBase
-#if os(iOS)
-import UIKit
-#endif
+
 public struct ForceUpdateViewPresenter {
     var config: ForceUpdateViewConfig
     public init(data: UpdateModel?, config: ForceUpdateViewConfig) {
@@ -22,11 +20,7 @@ public struct ForceUpdateViewPresenter {
             let version = getLocalizeString(localVersion) { self.config.versionText = version }
         if let localDescription = data?.description,
            let description = getLocalizeString(localDescription) { self.config.descriptionText = description }
-        if let icon = data?.icon, let url = URL(string: icon) { 
-            Task { @MainActor in
-                await setImageToConfig(from: url)
-            }
-        }
+        if let icon = data?.icon { self.config.icon = icon }
     }
     
     func getLocalizeString(_ localize: LocalString) -> String? {
@@ -38,19 +32,5 @@ public struct ForceUpdateViewPresenter {
             }
         }
         return localizeString.content
-    }
-    
-    @MainActor
-    func setImageToConfig(from url: URL) async {
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let uiImage = UIImage(data: data) {
-                self.config.updateImage = Image(uiImage: uiImage)
-            } else {
-                self.config.updateImage = ImageHelper.image(config.updateImageType.rawValue)
-            }
-        } catch {
-            self.config.updateImage = ImageHelper.image(config.updateImageType.rawValue)
-        }
     }
 }
