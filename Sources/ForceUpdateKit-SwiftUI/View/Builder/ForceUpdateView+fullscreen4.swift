@@ -28,30 +28,28 @@ public struct ForceUpdateView_FullScreen4: View, ForceUpdateViewProtocol {
             }
             
             VStack(spacing: 0) {
-                Spacer()
-                
                 iconView(
                     color: config.updateImageColor,
                     image: config.icon,
                     imageType: config.updateImageType
                 )
-                    .frame(width: 191, height: 139)
-                    .padding(.bottom, 31)
+                .frame(width: 191, height: 139)
+                .padding(.top, 100)
                 
                 Text(config.headerTitle)
                     .font(config.headerTitleFont)
                     .foregroundColor(config.headerTitleColor)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
+                    .padding(.top, 31)
                 
                 Text(config.descriptionText)
                     .font(config.descriptionFont)
                     .foregroundColor(config.descriptionTextColor)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 10)
-                
+                    .padding(.top, 16)
+                Spacer()
                 Button(action: {
                     viewModel.openLink()
                     viewModel.setAction(.update)
@@ -75,15 +73,15 @@ public struct ForceUpdateView_FullScreen4: View, ForceUpdateViewProtocol {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
                     .padding(.bottom, 52)
-                
-                Spacer()
             }
             .background(config.contentViewBackColor)
             .cornerRadius(20)
+            .ignoresSafeArea()
         }
         .onAppear {
             viewModel.setAction(.view)
         }
+        .ignoresSafeArea()
     }
 }
 

@@ -80,16 +80,16 @@ public struct ForceUpdateView_FullScreen2: View, ForceUpdateViewProtocol {
                     .foregroundColor(config.versionTextColor)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 52)
-                
-                Spacer()
+                    .padding(.bottom, 30)
             }
             .background(config.contentViewBackColor)
             .cornerRadius(20)
+            .ignoresSafeArea()
         }
         .onAppear {
             viewModel.setAction(.view)
         }
+        .ignoresSafeArea()
     }
 }
 
